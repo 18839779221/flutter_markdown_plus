@@ -236,7 +236,10 @@ class MarkdownBuilder implements md.NodeVisitor {
       } else if (tag == 'blockquote') {
         _isInBlockquote = true;
       } else if (tag == 'table') {
-        _tables.add(_TableElement());
+        // Only create _TableElement if no custom builder is registered
+        if (!builders.containsKey('table')) {
+          _tables.add(_TableElement());
+        }
       } else if (tag == 'tr') {
         final int length = _tables.single.rows.length;
         Decoration? decoration = styleSheet.tableCellsDecoration;
