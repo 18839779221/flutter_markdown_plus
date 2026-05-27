@@ -241,24 +241,27 @@ class MarkdownBuilder implements md.NodeVisitor {
           _tables.add(_TableElement());
         }
       } else if (tag == 'tr') {
-        final int length = _tables.single.rows.length;
-        Decoration? decoration = styleSheet.tableCellsDecoration;
+        // Only process tr if no custom table builder
+        if (!builders.containsKey('table')) {
+          final int length = _tables.single.rows.length;
+          Decoration? decoration = styleSheet.tableCellsDecoration;
 
-        if (length == 0) {
-          decoration = styleSheet.tableHeadCellsDecoration ?? styleSheet.tableCellsDecoration;
-        } else if (length.isEven) {
-          decoration = styleSheet.tableCellsDecoration;
-        } else {
-          decoration = null;
+          if (length == 0) {
+            decoration = styleSheet.tableHeadCellsDecoration ?? styleSheet.tableCellsDecoration;
+          } else if (length.isEven) {
+            decoration = styleSheet.tableCellsDecoration;
+          } else {
+            decoration = null;
+          }
+          _tables.single.rows.add(TableRow(
+            decoration: decoration,
+            // TODO(stuartmorgan): This should be fixed, not suppressed; enabling
+            // this lint warning exposed that the builder is modifying the
+            // children of TableRows, even though they are @immutable.
+            // ignore: prefer_const_literals_to_create_immutables
+            children: <Widget>[],
+          ));
         }
-        _tables.single.rows.add(TableRow(
-          decoration: decoration,
-          // TODO(stuartmorgan): This should be fixed, not suppressed; enabling
-          // this lint warning exposed that the builder is modifying the
-          // children of TableRows, even though they are @immutable.
-          // ignore: prefer_const_literals_to_create_immutables
-          children: <Widget>[],
-        ));
       }
       final _BlockElement bElement = _BlockElement(tag);
       if (start != null) {
