@@ -439,24 +439,59 @@ class MarkdownBuilder implements md.NodeVisitor {
           );
         }
       } else if (tag == 'table') {
-        if (styleSheet.tableColumnWidth is FixedColumnWidth || styleSheet.tableColumnWidth is IntrinsicColumnWidth) {
-          child = _ScrollControllerBuilder(
-            builder: (BuildContext context, ScrollController tableScrollController, Widget? child) {
-              return Scrollbar(
-                controller: tableScrollController,
-                thumbVisibility: styleSheet.tableScrollbarThumbVisibility,
-                child: SingleChildScrollView(
-                  controller: tableScrollController,
-                  scrollDirection: Axis.horizontal,
-                  padding: styleSheet.tablePadding,
-                  child: child,
-                ),
-              );
-            },
-            child: _buildTable(),
+        // Check for custom table builder first
+        if (builders.containsKey('table')) {
+          final Widget? customWidget = builders['table']!.visitElementAfterWithContext(
+            delegate.context,
+            element,
+            styleSheet.styles[tag],
+            null,
           );
+          if (customWidget != null) {
+            child = customWidget;
+          } else {
+            // Fallback to default table rendering
+            if (styleSheet.tableColumnWidth is FixedColumnWidth || styleSheet.tableColumnWidth is IntrinsicColumnWidth) {
+              child = _ScrollControllerBuilder(
+                builder: (BuildContext context, ScrollController tableScrollController, Widget? child) {
+                  return Scrollbar(
+                    controller: tableScrollController,
+                    thumbVisibility: styleSheet.tableScrollbarThumbVisibility,
+                    child: SingleChildScrollView(
+                      controller: tableScrollController,
+                      scrollDirection: Axis.horizontal,
+                      padding: styleSheet.tablePadding,
+                      child: child,
+                    ),
+                  );
+                },
+                child: _buildTable(),
+              );
+            } else {
+              child = _buildTable();
+            }
+          }
         } else {
-          child = _buildTable();
+          // No custom builder, use default
+          if (styleSheet.tableColumnWidth is FixedColumnWidth || styleSheet.tableColumnWidth is IntrinsicColumnWidth) {
+            child = _ScrollControllerBuilder(
+              builder: (BuildContext context, ScrollController tableScrollController, Widget? child) {
+                return Scrollbar(
+                  controller: tableScrollController,
+                  thumbVisibility: styleSheet.tableScrollbarThumbVisibility,
+                  child: SingleChildScrollView(
+                    controller: tableScrollController,
+                    scrollDirection: Axis.horizontal,
+                    padding: styleSheet.tablePadding,
+                    child: child,
+                  ),
+                );
+              },
+              child: _buildTable(),
+            );
+          } else {
+            child = _buildTable();
+          }
         }
       } else if (tag == 'blockquote') {
         _isInBlockquote = false;
