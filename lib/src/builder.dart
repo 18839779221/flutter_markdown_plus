@@ -555,27 +555,30 @@ class MarkdownBuilder implements md.NodeVisitor {
       } else if (tag == 'br') {
         current.children.add(_buildRichText(const TextSpan(text: '\n')));
       } else if (tag == 'th' || tag == 'td') {
-        final bool isHeaderCell = tag == 'th';
-        TextAlign? align;
-        final String? alignAttribute = element.attributes['align'];
-        if (alignAttribute == null) {
-          align = tag == 'th' ? styleSheet.tableHeadAlign : TextAlign.left;
-        } else {
-          switch (alignAttribute) {
-            case 'left':
-              align = TextAlign.left;
-            case 'center':
-              align = TextAlign.center;
-            case 'right':
-              align = TextAlign.right;
+        // Only process th/td if no custom table builder
+        if (!builders.containsKey('table')) {
+          final bool isHeaderCell = tag == 'th';
+          TextAlign? align;
+          final String? alignAttribute = element.attributes['align'];
+          if (alignAttribute == null) {
+            align = tag == 'th' ? styleSheet.tableHeadAlign : TextAlign.left;
+          } else {
+            switch (alignAttribute) {
+              case 'left':
+                align = TextAlign.left;
+              case 'center':
+                align = TextAlign.center;
+              case 'right':
+                align = TextAlign.right;
+            }
           }
+          final Widget child = _buildTableCell(
+            _mergeInlineChildren(current.children, align),
+            textAlign: align,
+            isHeader: isHeaderCell,
+          );
+          _tables.single.rows.last.children.add(child);
         }
-        final Widget child = _buildTableCell(
-          _mergeInlineChildren(current.children, align),
-          textAlign: align,
-          isHeader: isHeaderCell,
-        );
-        _tables.single.rows.last.children.add(child);
       } else if (tag == 'a') {
         if (!builders.containsKey('a')) {
           _linkHandlers.removeLast();
